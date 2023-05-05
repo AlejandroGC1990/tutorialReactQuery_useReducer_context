@@ -3,11 +3,15 @@ import { getNotes, createNote, updateNote } from './requests';
 
 const App = () => {
   const queryClient = useQueryClient();
-  
+
   const newNoteMutation = useMutation(createNote, {
-    onSuccess: () => {
-      queryClient.invalidateQueries('notes')
+    onSuccess: (newNote) => {
+      const notes = queryClient.getQueryData('notes')
+      queryClient.setQueriesData('notes', notes.concat(newNote));
     },
+    /*en el callback de onSuccess, el objeto queryClient primero lee 
+    el estado existente de notes de la consulta y lo actualiza agregando 
+    una nueva nota, que se obtiene como parámetro de la función de devolución de llamada.*/
   });
 
   const addNote = async (event) => {
@@ -28,7 +32,9 @@ const App = () => {
     updateNoteMutation.mutate({ ...note, important: !note.important })
   }
 
-  const result = useQuery('notes', getNotes);
+  const result = useQuery('notes', getNotes, {
+    refetchOnWindowFocus: false
+  });
 
   if (result.isLoading) {
     return <div>loading data...</div>
